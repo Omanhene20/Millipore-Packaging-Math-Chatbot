@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adjei AI MATH Assistant</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            padding: 50px;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            margin: auto;
+        }
+        h1 {
+            font-size: 32px;
+            color: #333;
+        }
+        .calculate-button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 24px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .calculate-button:hover {
+            background-color: #0056b3;
+        }
+        .input-field, .select-field {
+            font-size: 20px;
+            padding: 10px;
+            width: 80%;
+            margin: 10px;
+            text-align: center;
+        }
+        .hidden {
+            display: none;
+        }
+        .final-results {
+            font-size: 26px;
+            font-weight: bold;
+            color: #d9534f;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="introSection">
+        <h1>PACKAGING AI WORKSHEET</h1>
+        <p>Hello! I am here to help with your math.</p>
+        <p>Would you like to start calculation?</p>
+        <button class="calculate-button" onclick="startWeigher()">START</button>
+    </div>
+
+    <div class="container hidden" id="weigherSection">
+        <h1>WORKSHEET AUTO CALCULATOR</h1>
+        <p>How many SKUs do you have?</p>
+        <input type="number" id="skuCount" class="input-field" min="1"><br>
+        <p>How many Bulks did you use?</p>
+        <input type="number" id="bulkCount" class="input-field" min="1">
+        <button class="calculate-button" onclick="setupInputs()">Proceed</button>
+        <div id="bulkInputs" class="hidden"></div>
+        <div id="skuInputs" class="hidden"></div>
+    </div>
+
+    <div class="container hidden" id="resultSection">
+        <h1>Calculation Results</h1>
+        <div id="results"></div>
+        <button class="calculate-button" onclick="confirmReset()">Start Over</button>
+    </div>
+
+
+    
+
+    <script>
+        
+        function startWeigher() {
+            document.getElementById('introSection').classList.add('hidden');
+            document.getElementById('weigherSection').classList.remove('hidden');
+        }
+
+        function convertToGrams(value, unit) {
+            const conversionRates = { 'g': 1, 'mg': 0.001, 'kg': 1000, 'L': 1000, 'mL': 1 };
+            return value * conversionRates[unit];
+        }
+
+        function setupInputs() {
+            let bulkCount = document.getElementById('bulkCount').value;
+            let skuCount = document.getElementById('skuCount').value;
+            let bulkContainer = document.getElementById('bulkInputs');
+            let skuContainer = document.getElementById('skuInputs');
+
+            bulkContainer.innerHTML = `<h2>Enter Bulk Weights</h2>`;
+            for (let i = 0; i < bulkCount; i++) {
+                bulkContainer.innerHTML += `
+                    <h3>Bulk ${i + 1}</h3>
+                    <label>Beginning Weight (A): </label>
+                    <input type="number" class="input-field" id="beginWeight${i}" step="any">
+                    <select class="select-field" id="beginUnit${i}">
+                        <option value="g">g</option>
+                        <option value="mg">mg</option>
+                        <option value="kg">kg</option>
+                        <option value="L">L</option>
+                        <option value="mL">mL</option>
+                    </select><br>
+                    <label>Ending Weight (B): </label>
+                    <input type="number" class="input-field" id="endWeight${i}" step="any">
+                    <select class="select-field" id="endUnit${i}">
+                        <option value="g">g</option>
+                        <option value="mg">mg</option>
+                        <option value="kg">kg</option>
+                        <option value="L">L</option>
+                        <option value="mL">mL</option>
+                    </select><br>
+                `;
+            }
+            bulkContainer.classList.remove('hidden');
+
+            skuContainer.innerHTML = `<h2>Enter SKU Details</h2>`;
+            for (let i = 0; i < skuCount; i++) {
+                skuContainer.innerHTML += `
+                    <h3>SKU ${i + 1}</h3>
+                    <label>SKU Size (D): </label>
+                    <input type="number" class="input-field" id="skuSize${i}" step="any">
+                    <select class="select-field" id="skuUnit${i}">
+                        <option value="g">g</option>
+                        <option value="mg">mg</option>
+                        <option value="kg">kg</option>
+                        <option value="L">L</option>
+                        <option value="mL">mL</option>
+                    </select><br>
+                    <label>Quantity (E): </label>
+                    <input type="number" class="input-field" id="quantity${i}" step="any"><br>
+                `;
+            }
+            skuContainer.innerHTML += '<button class="calculate-button" onclick="calculateVariance()">Calculate Variance</button>';
+            skuContainer.classList.remove('hidden');
+        }
+
+        function calculateVariance() {
+            let bulkCount = document.getElementById('bulkCount').value;
+            let skuCount = document.getElementById('skuCount').value;
+            let totalNetUsed = 0;
+            let totalPkgEquivalence = 0;
+            let results = document.getElementById('results');
+            results.innerHTML = `<h2>Final Results</h2>`;
+
+            results.innerHTML += `<h3>Net Used for Each Bulk:</h3>`;
+            for (let i = 0; i < bulkCount; i++) {
+                let A = convertToGrams(parseFloat(document.getElementById(`beginWeight${i}`).value) || 0, document.getElementById(`beginUnit${i}`).value);
+                let B = convertToGrams(parseFloat(document.getElementById(`endWeight${i}`).value) || 0, document.getElementById(`endUnit${i}`).value);
+                let netUsed = (A - B).toFixed(3);
+                totalNetUsed += parseFloat(netUsed);
+                results.innerHTML += `<p>Bulk ${i + 1}: ${netUsed} g</p>`;
+            }
+
+            results.innerHTML += `<h3>PKG Equivalence for Each SKU:</h3>`;
+            for (let i = 0; i < skuCount; i++) {
+                let D = convertToGrams(parseFloat(document.getElementById(`skuSize${i}`).value) || 0, document.getElementById(`skuUnit${i}`).value);
+                let E = parseFloat(document.getElementById(`quantity${i}`).value) || 0;
+                let pkgEquivalence = (D * E).toFixed(3);
+                totalPkgEquivalence += parseFloat(pkgEquivalence);
+                results.innerHTML += `<p>SKU ${i + 1}: ${pkgEquivalence} g</p>`;
+            }
+
+            let variance = (totalNetUsed - totalPkgEquivalence).toFixed(3);
+            let percentageVariance = totalPkgEquivalence !== 0 ? ((100 * variance) / totalPkgEquivalence).toFixed(3) : 0;
+
+            results.innerHTML += `<p class="final-results">Total Net Used: ${totalNetUsed} g</p>
+                                  <p class="final-results">Total PKG Equivalence: ${totalPkgEquivalence} g</p>
+                                  <p class="final-results">Variance: ${variance} g</p>
+                                  <p class="final-results">Percentage Variance: ${percentageVariance}%</p>`;
+
+            document.getElementById('weigherSection').classList.add('hidden');
+            document.getElementById('resultSection').classList.remove('hidden');
+        }
+        function confirmReset() {
+        let passcode = prompt("Enter the passcode to reset:");
+        if (passcode === "1234") {  // Replace "1234" with your actual passcode
+            window.location.reload();
+        } else {
+            alert("Incorrect passcode. Reset canceled.");
+        }
+    }
+    </script>
+</body>
+</html>
