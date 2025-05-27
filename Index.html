@@ -51,8 +51,14 @@
         .final-results {
             font-size: 26px;
             font-weight: bold;
-            color: #d9534f;
             margin-top: 20px;
+        }
+        .compact-button {
+            display: inline-block;
+            width: auto; /* Allow the button to size itself based on content */
+            max-width: 150px; /* Set a maximum width for the buttons */
+            padding: 10px 15px; /* Adjust padding for a more compact look */
+            margin: 5px; /* Add some margin for spacing */
         }
     </style>
 </head>
@@ -69,7 +75,24 @@
         <p>How many SKUs do you have?</p>
         <input type="number" id="skuCount" class="input-field" min="1"><br>
         <p>How many Bulks did you use?</p>
-        <input type="number" id="bulkCount" class="input-field" min="1">
+        <input type="number" id="bulkCount" class="input-field" min="1"><br>
+        
+        <p>Do you have a control weight?</p>
+        <button class="calculate-button compact-button" onclick="setControlWeight(true)">Yes</button>
+        <button class="calculate-button compact-button" onclick="setControlWeight(false)">No</button>
+        
+        <div id="controlWeightSection" class="hidden">
+            <h3>Enter Control Weight</h3>
+            <input type="number" id="controlWeight" class="input-field" step="any">
+            <select class="select-field" id="controlUnit">
+                <option value="g">g</option>
+                <option value="mg">mg</option>
+                <option value="kg">kg</option>
+                <option value="L">L</option>
+                <option value="mL">mL</option>
+            </select>
+        </div>
+        
         <button class="calculate-button" onclick="setupInputs()">Proceed</button>
         <div id="bulkInputs" class="hidden"></div>
         <div id="skuInputs" class="hidden"></div>
@@ -81,9 +104,6 @@
         <button class="calculate-button" onclick="confirmReset()">Start Over</button>
     </div>
 
-
-    
-
     <script>
         
         function startWeigher() {
@@ -94,6 +114,15 @@
         function convertToGrams(value, unit) {
             const conversionRates = { 'g': 1, 'mg': 0.001, 'kg': 1000, 'L': 1000, 'mL': 1 };
             return value * conversionRates[unit];
+        }
+
+        function setControlWeight(hasControl) {
+            const controlWeightSection = document.getElementById('controlWeightSection');
+            if (hasControl) {
+                controlWeightSection.classList.remove('hidden');
+            } else {
+                controlWeightSection.classList.add('hidden');
+            }
         }
 
         function setupInputs() {
@@ -175,6 +204,10 @@
                 results.innerHTML += `<p>SKU ${i + 1}: ${pkgEquivalence} g</p>`;
             }
 
+            // Add control weight if applicable
+            let controlWeight = convertToGrams(parseFloat(document.getElementById('controlWeight').value) || 0, document.getElementById('controlUnit').value);
+            totalPkgEquivalence += controlWeight;
+
             let variance = (totalNetUsed - totalPkgEquivalence).toFixed(3);
             let percentageVariance = totalPkgEquivalence !== 0 ? ((100 * variance) / totalPkgEquivalence).toFixed(3) : 0;
 
@@ -183,17 +216,43 @@
                                   <p class="final-results">Variance: ${variance} g</p>
                                   <p class="final-results">Percentage Variance: ${percentageVariance}%</p>`;
 
+            // Determine color based on weight classification
+            let isAnalytical = true; // Assume analytical first
+            for (let i = 0; i < skuCount; i++) {
+                let D = convertToGrams(parseFloat(document.getElementById(`skuSize${i}`).value) || 0, document.getElementById(`skuUnit${i}`).value);
+                if (D >= 100) {
+                    isAnalytical = false; // If any SKU is >= 100g, it's K-balance
+                    break;
+                }
+            }
+
+            // Apply color coding
+            let color;
+            if (isAnalytical) {
+                color = (percentageVariance >= 0 && percentageVariance <= 15) ? 'green' : 'red';
+            } else {
+                color = (percentageVariance >= 0 && percentageVariance <= 3) ? 'green' : 'red';
+            }
+
+            // Set color for results
+            document.querySelectorAll('.final-results').forEach(result => {
+                result.style.color = color;
+            });
+
             document.getElementById('weigherSection').classList.add('hidden');
             document.getElementById('resultSection').classList.remove('hidden');
         }
+        
         function confirmReset() {
-        let passcode = prompt("Enter the passcode to reset:");
-        if (passcode === "1234") {  // Replace "1234" with your actual passcode
-            window.location.reload();
-        } else {
-            alert("Incorrect passcode. Reset canceled.");
+            let passcode = prompt("Enter the passcode to reset:");
+            if (passcode === "1234") {  // Replace "1234" with your actual passcode
+                window.location.reload();
+            } else {
+                alert("Incorrect passcode. Reset canceled.");
+            }
         }
-    }
     </script>
 </body>
 </html>
+
+
